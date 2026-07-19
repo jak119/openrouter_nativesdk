@@ -1,5 +1,5 @@
 {
-  "domain": "open_router_nativesdk",
+  "domain": "openrouter_nativesdk",
   "name": "OpenRouter Enhanced",
   "after_dependencies": [
     "assist_pipeline",
