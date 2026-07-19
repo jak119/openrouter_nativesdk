@@ -6,7 +6,7 @@ on:
       - main
   pull_request:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 0 * * 5"
   workflow_dispatch:
   workflow_call:
 
@@ -30,3 +30,22 @@ jobs:
         uses: "hacs/action@main"
         with:
           category: "integration"
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v7
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+
+      - name: Analyze with CodeQL
+        uses: github/codeql-action/analyze@v3
