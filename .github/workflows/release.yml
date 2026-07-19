@@ -1,0 +1,116 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "New version (e.g. 1.2.3)"
+        required: true
+
+jobs:
+  validate:
+    name: Validate release candidate
+    uses: ./.github/workflows/validate.yml
+
+  release:
+    name: Create release
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # Full history needed for changelog generation
+
+      - name: Validate and resolve version
+        id: version
+        run: |
+          INPUT="${{ github.event.inputs.version }}"
+          # Strip leading 'v' if present so we always work with bare semver
+          NEW="${INPUT#v}"
+
+          # Basic semver format check (X.Y.Z, each part numeric)
+          if ! [[ "$NEW" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version '$NEW' is not valid semver (expected X.Y.Z)"
+            exit 1
+          fi
+
+          # Find the latest tag; if none exist, any version is acceptable
+          LATEST_TAG=$(git tag --sort=-version:refname | head -n1)
+          if [[ -n "$LATEST_TAG" ]]; then
+            LATEST="${LATEST_TAG#v}"
+            # sort -V puts the lower version first; equal versions will be adjacent
+            LOWER=$(printf '%s\n%s' "$LATEST" "$NEW" | sort -V | head -n1)
+            if [[ "$LOWER" != "$LATEST" || "$NEW" == "$LATEST" ]]; then
+              echo "::error::New version '$NEW' must be greater than current '$LATEST'"
+              exit 1
+            fi
+          else
+            LATEST_TAG=""
+            LATEST="(none)"
+          fi
+
+          echo "new=$NEW"           >> "$GITHUB_OUTPUT"
+          echo "tag=v$NEW"          >> "$GITHUB_OUTPUT"
+          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+          echo "latest=$LATEST"     >> "$GITHUB_OUTPUT"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          NEW_TAG="${{ steps.version.outputs.tag }}"
+          LATEST_TAG="${{ steps.version.outputs.latest_tag }}"
+
+          if [[ -n "$LATEST_TAG" ]]; then
+            RANGE="$LATEST_TAG..HEAD"
+            SINCE_TEXT="since $LATEST_TAG"
+          else
+            RANGE="HEAD"
+            SINCE_TEXT="initial release"
+          fi
+
+          # Collect commits: hash (short) + subject, excluding merge commits
+          COMMITS=$(git log "$RANGE" --no-merges --pretty=format:"- %s ([%h](https://github.com/${{ github.repository }}/commit/%H))")
+
+          if [[ -z "$COMMITS" ]]; then
+            COMMITS="- No changes recorded"
+          fi
+
+          # Write the changelog body to a temp file to preserve newlines
+          {
+            echo "## What's changed"
+            echo ""
+            echo "$COMMITS"
+            echo ""
+            echo "**Full diff:** https://github.com/${{ github.repository }}/compare/${LATEST_TAG:-$(git rev-list --max-parents=0 HEAD)}...$NEW_TAG"
+          } > /tmp/changelog.md
+
+          cat /tmp/changelog.md
+
+      - name: Update manifest.json version
+        run: |
+          NEW="${{ steps.version.outputs.new }}"
+          jq --arg v "$NEW" '.version = $v' \
+            custom_components/google_pollen/manifest.json \
+            > /tmp/manifest.json
+          mv /tmp/manifest.json custom_components/google_pollen/manifest.json
+
+      - name: Commit manifest and tag
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add custom_components/google_pollen/manifest.json
+          git commit -m "Release ${{ steps.version.outputs.tag }}"
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin HEAD:${{ github.ref_name }} --tags
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "${{ steps.version.outputs.tag }}" \
+            --notes-file /tmp/changelog.md

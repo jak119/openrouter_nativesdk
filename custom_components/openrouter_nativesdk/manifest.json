@@ -1,0 +1,13 @@
+{
+  "domain": "openrouter_nativesdk",
+  "name": "OpenRouter Enhanced",
+  "after_dependencies": ["assist_pipeline", "intent"],
+  "codeowners": ["@jak119"],
+  "config_flow": true,
+  "dependencies": ["conversation"],
+  "documentation": "https://github.com/jak119/jk-openrouter",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "quality_scale": "bronze",
+  "requirements": ["openrouter==0.11.45"]
+}
