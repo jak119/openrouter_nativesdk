@@ -13,6 +13,7 @@ jobs:
     uses: ./.github/workflows/validate.yml
     permissions:
       actions: read
+      contents: read
       security-events: write
 
   release:
