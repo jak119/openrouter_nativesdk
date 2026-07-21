@@ -11,6 +11,9 @@ jobs:
   validate:
     name: Validate release candidate
     uses: ./.github/workflows/validate.yml
+    permissions:
+      actions: read
+      security-events: write
 
   release:
     name: Create release
