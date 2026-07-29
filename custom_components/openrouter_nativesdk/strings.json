@@ -1,1 +1,83 @@
-{"config": {"step": {"user": {"title": "OpenRouter", "description": "Enter an OpenRouter API key.", "data": {"api_key": "API key"}}}, "error": {"cannot_connect": "Unable to connect to OpenRouter.", "no_models": "No models were returned."}}}
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "OpenRouter",
+        "description": "Enter an OpenRouter API key.",
+        "data": {
+          "api_key": "API key"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate OpenRouter",
+        "description": "Enter a new OpenRouter API key.",
+        "data": {
+          "api_key": "API key"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to OpenRouter.",
+      "no_models": "No models were returned."
+    },
+    "abort": {
+      "reauth_successful": "Re-authentication was successful."
+    }
+  },
+  "config_subentries": {
+    "conversation": {
+      "step": {
+        "init": {
+          "title": "OpenRouter conversation agent",
+          "description": "Configure the conversation agent.",
+          "data": {
+            "model": "Model",
+            "preset": "Preset",
+            "router": "Router",
+            "cost_quality_tradeoff": "Cost/quality tradeoff",
+            "allowed_models": "Allowed models",
+            "temperature": "Temperature",
+            "prompt": "Prompt",
+            "llm_hass_api": "Home Assistant API access",
+            "web_search": "Enable web search"
+          }
+        }
+      }
+    },
+    "ai_task_data": {
+      "step": {
+        "init": {
+          "title": "OpenRouter AI tasks",
+          "description": "Configure AI task generation.",
+          "data": {
+            "model": "Model",
+            "image_model": "Image generation model"
+          }
+        }
+      }
+    },
+    "stt": {
+      "step": {
+        "init": {
+          "title": "OpenRouter Speech-to-Text",
+          "description": "Configure speech-to-text.",
+          "data": {
+            "stt_model": "Speech-to-text model"
+          }
+        }
+      }
+    },
+    "tts": {
+      "step": {
+        "init": {
+          "title": "OpenRouter Text-to-Speech",
+          "description": "Configure text-to-speech.",
+          "data": {
+            "tts_model": "Text-to-speech model",
+            "voice": "Voice"
+          }
+        }
+      }
+    }
+  }
+}

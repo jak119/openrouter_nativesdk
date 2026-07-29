@@ -12,6 +12,7 @@ from homeassistant.config_entries import (
     ConfigEntryState,
     ConfigFlow,
     ConfigFlowResult,
+    ConfigSubentry,
     ConfigSubentryFlow,
     SubentryFlowResult,
 )
@@ -88,10 +89,10 @@ class OpenRouterConfigFlow(ConfigFlow, domain=DOMAIN):
                         title="OpenRouter",
                         data=user_input,
                         subentries=[
-                            {"subentry_type": "conversation", "title": "OpenRouter", "data": RECOMMENDED_CONVERSATION_OPTIONS, "unique_id": None},
-                            {"subentry_type": "ai_task_data", "title": "OpenRouter AI Tasks", "data": RECOMMENDED_AI_TASK_OPTIONS, "unique_id": None},
-                            {"subentry_type": "stt", "title": "OpenRouter Speech-to-Text", "data": RECOMMENDED_STT_OPTIONS, "unique_id": None},
-                            {"subentry_type": "tts", "title": "OpenRouter Text-to-Speech", "data": RECOMMENDED_TTS_OPTIONS, "unique_id": None},
+                            ConfigSubentry(subentry_type="conversation", title="OpenRouter", data=RECOMMENDED_CONVERSATION_OPTIONS, unique_id=None),
+                            ConfigSubentry(subentry_type="ai_task_data", title="OpenRouter AI Tasks", data=RECOMMENDED_AI_TASK_OPTIONS, unique_id=None),
+                            ConfigSubentry(subentry_type="stt", title="OpenRouter Speech-to-Text", data=RECOMMENDED_STT_OPTIONS, unique_id=None),
+                            ConfigSubentry(subentry_type="tts", title="OpenRouter Text-to-Speech", data=RECOMMENDED_TTS_OPTIONS, unique_id=None),
                         ],
                     )
         return self.async_show_form(
