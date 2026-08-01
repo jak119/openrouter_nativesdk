@@ -26,6 +26,11 @@
   },
   "config_subentries": {
     "conversation": {
+      "entry_type": "Conversation agent",
+      "initiate_flow": {
+        "user": "Add conversation agent",
+        "reconfigure": "Reconfigure conversation agent"
+      },
       "step": {
         "init": {
           "title": "OpenRouter conversation agent",
@@ -45,6 +50,11 @@
       }
     },
     "ai_task_data": {
+      "entry_type": "AI task",
+      "initiate_flow": {
+        "user": "Add AI task",
+        "reconfigure": "Reconfigure AI task"
+      },
       "step": {
         "init": {
           "title": "OpenRouter AI tasks",
@@ -57,6 +67,11 @@
       }
     },
     "stt": {
+      "entry_type": "Speech-to-text",
+      "initiate_flow": {
+        "user": "Add speech-to-text",
+        "reconfigure": "Reconfigure speech-to-text"
+      },
       "step": {
         "init": {
           "title": "OpenRouter Speech-to-Text",
@@ -68,6 +83,11 @@
       }
     },
     "tts": {
+      "entry_type": "Text-to-speech",
+      "initiate_flow": {
+        "user": "Add text-to-speech",
+        "reconfigure": "Reconfigure text-to-speech"
+      },
       "step": {
         "init": {
           "title": "OpenRouter Text-to-Speech",
