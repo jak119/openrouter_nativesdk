@@ -5,23 +5,23 @@
         "title": "OpenRouter",
         "description": "Enter an OpenRouter API key.",
         "data": {
-          "api_key": "API key"
+          "api_key": "[%key:common::config_flow::data::api_key%]"
         }
       },
       "reauth_confirm": {
         "title": "Reauthenticate OpenRouter",
         "description": "Enter a new OpenRouter API key.",
         "data": {
-          "api_key": "API key"
+          "api_key": "[%key:common::config_flow::data::api_key%]"
         }
       }
     },
     "error": {
-      "cannot_connect": "Unable to connect to OpenRouter.",
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
       "no_models": "No models were returned."
     },
     "abort": {
-      "reauth_successful": "Re-authentication was successful."
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
     }
   },
   "config_subentries": {
@@ -31,14 +31,14 @@
           "title": "OpenRouter conversation agent",
           "description": "Configure the conversation agent.",
           "data": {
-            "model": "Model",
+            "model": "[%key:common::generic::model%]",
             "preset": "Preset",
             "router": "Router",
             "cost_quality_tradeoff": "Cost/quality tradeoff",
             "allowed_models": "Allowed models",
             "temperature": "Temperature",
-            "prompt": "Prompt",
-            "llm_hass_api": "Home Assistant API access",
+            "prompt": "[%key:common::config_flow::data::prompt%]",
+            "llm_hass_api": "[%key:common::config_flow::data::llm_hass_api%]",
             "web_search": "Enable web search"
           }
         }
@@ -50,7 +50,7 @@
           "title": "OpenRouter AI tasks",
           "description": "Configure AI task generation.",
           "data": {
-            "model": "Model",
+            "model": "[%key:common::generic::model%]",
             "image_model": "Image generation model"
           }
         }
