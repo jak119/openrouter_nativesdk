@@ -2,10 +2,6 @@ name: Release
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: "New version (e.g. 1.2.3)"
-        required: true
 
 jobs:
   validate:
@@ -31,21 +27,28 @@ jobs:
       - name: Validate and resolve version
         id: version
         run: |
-          INPUT="${{ github.event.inputs.version }}"
-          # Strip leading 'v' if present so we always work with bare semver
-          NEW="${INPUT#v}"
+          # CalVer format: YYYY.MM.DD, using the current UTC date.
+          BASE="$(date -u '+%Y.%m.%d')"
+          TAG_PATTERN='^v[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$'
+          SAME_DAY_PATTERN="^v${BASE//./\\.}(\\.[0-9]+)?$"
 
-          # Basic semver format check (X.Y.Z, each part numeric)
-          if ! [[ "$NEW" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Version '$NEW' is not valid semver (expected X.Y.Z)"
-            exit 1
+          # Use the date as-is for the first release of the day. For later
+          # releases, append the next numeric suffix: .1, .2, and so on.
+          SAME_DAY_TAGS=$(git tag --list | grep -E "$SAME_DAY_PATTERN" || true)
+          if [[ -z "$SAME_DAY_TAGS" ]]; then
+            NEW="$BASE"
+          else
+            MAX_SUFFIX=$(printf '%s\n' "$SAME_DAY_TAGS" | sed -E 's/^v[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.([0-9]+))?$/\2/' \
+              | awk 'BEGIN { max=0 } $1 != "" && $1 > max { max=$1 } END { print max }')
+            NEW="$BASE.$((MAX_SUFFIX + 1))"
           fi
 
-          # Find the latest tag; if none exist, any version is acceptable
-          LATEST_TAG=$(git tag --sort=-version:refname | head -n1)
+          # Only compare against CalVer tags; v0.0.x tags from before this
+          # migration are intentionally ignored.
+          LATEST_TAG=$(git tag --list | grep -E "$TAG_PATTERN" | sort -V | tail -n1 || true)
           if [[ -n "$LATEST_TAG" ]]; then
             LATEST="${LATEST_TAG#v}"
-            # sort -V puts the lower version first; equal versions will be adjacent
+            # sort -V puts the earlier calendar version first.
             LOWER=$(printf '%s\n%s' "$LATEST" "$NEW" | sort -V | head -n1)
             if [[ "$LOWER" != "$LATEST" || "$NEW" == "$LATEST" ]]; then
               echo "::error::New version '$NEW' must be greater than current '$LATEST'"
