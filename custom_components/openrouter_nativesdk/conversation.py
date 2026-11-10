@@ -52,7 +52,7 @@ class OpenRouterConversationEntity(OpenRouterLLMEntity, conversation.Conversatio
     async def _async_handle_chat_log(self, chat_log: conversation.ChatLog) -> None:
         payload = await self._async_build_payload(chat_log)
         for _ in range(MAX_TOOL_ITERATIONS):
-            response = await self.client.async_chat(payload)
+            response = await self._async_chat(payload)
             _LOGGER.debug("OpenRouter answered with %s", response.get("model"))
             assistant = _assistant_content(response_message(response), self.entity_id)
             async for _ in chat_log.async_add_assistant_content(assistant):

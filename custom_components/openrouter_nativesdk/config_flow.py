@@ -45,17 +45,17 @@ API_KEY_SCHEMA = vol.Schema({vol.Required(CONF_API_KEY): str})
 ROUTER_SLUGS = {option["value"] for option in ROUTER_OPTIONS}
 
 
-async def _async_validate_key(flow: ConfigFlow, api_key: str) -> str | None:
-    """Return an error key, or None when the key works."""
+async def _async_validate_key(flow: ConfigFlow, api_key: str) -> tuple[str | None, str]:
+    """Return an error key (None when the key works) and the key's label."""
     client = OpenRouterAPI(flow.hass, api_key)
     try:
-        await client.async_validate_key()
+        key_info = await client.async_validate_key()
         models = await client.async_list_models()
     except OpenRouterAuthError:
-        return "invalid_auth"
+        return "invalid_auth", ""
     except OpenRouterAPIError:
-        return "cannot_connect"
-    return None if models else "no_models"
+        return "cannot_connect", ""
+    return None if models else "no_models", key_info.get("label") or "OpenRouter"
 
 
 class OpenRouterConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -76,9 +76,10 @@ class OpenRouterConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input is not None:
             self._async_abort_entries_match(user_input)
-            if not (error := await _async_validate_key(self, user_input[CONF_API_KEY])):
+            error, label = await _async_validate_key(self, user_input[CONF_API_KEY])
+            if not error:
                 return self.async_create_entry(
-                    title="OpenRouter",
+                    title=label,
                     data=user_input,
                     subentries=[
                         ConfigSubentryData(subentry_type="conversation", title=ConversationFlow.title_for(DEFAULT_MODEL), data=RECOMMENDED_CONVERSATION_OPTIONS, unique_id=None),
@@ -96,7 +97,8 @@ class OpenRouterConfigFlow(ConfigFlow, domain=DOMAIN):
         """Confirm a replacement API key."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            if not (error := await _async_validate_key(self, user_input[CONF_API_KEY])):
+            error, _ = await _async_validate_key(self, user_input[CONF_API_KEY])
+            if not error:
                 return self.async_update_reload_and_abort(self._get_reauth_entry(), data=user_input)
             errors["base"] = error
         return self.async_show_form(step_id="reauth_confirm", data_schema=API_KEY_SCHEMA, errors=errors)

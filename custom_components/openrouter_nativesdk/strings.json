@@ -92,6 +92,23 @@
       }
     }
   },
+  "issues": {
+    "key_expiring": {
+      "title": "OpenRouter API key {label} expires soon",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Replace expiring OpenRouter API key",
+            "description": "The OpenRouter API key {label} expires on {expires_at}, and keys can't be extended. Create a new key at {keys_url}, then submit to start reauthentication and enter it."
+          }
+        }
+      }
+    },
+    "budget_exhausted": {
+      "title": "OpenRouter API key {label} is out of budget",
+      "description": "Requests are failing because the OpenRouter API key {label} has spent its budget. Raise the limit on OpenRouter or wait for it to reset."
+    }
+  },
   "selector": {
     "cost_tier": {
       "options": {

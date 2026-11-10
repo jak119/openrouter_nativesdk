@@ -39,7 +39,7 @@ class OpenRouterAITaskEntity(OpenRouterLLMEntity, ai_task.AITaskEntity):
                 "provider": {"require_parameters": True},
             }
         try:
-            response = await self.client.async_chat(await self._async_build_payload(chat_log, **extra))
+            response = await self._async_chat(await self._async_build_payload(chat_log, **extra))
         except OpenRouterAPIError as err:
             raise HomeAssistantError(f"OpenRouter data-generation request failed: {err}") from err
         text = response_message(response).get("content")

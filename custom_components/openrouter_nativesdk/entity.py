@@ -13,11 +13,12 @@ from homeassistant.const import CONF_MODEL
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers import llm
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.json import json_dumps
 
-from .api import OpenRouterAPI
+from .api import OpenRouterAPI, OpenRouterAPIError
 from .const import (
     CONF_ALLOWED_MODELS,
     CONF_COST_TIER,
@@ -25,6 +26,7 @@ from .const import (
     CONF_WEB_SEARCH,
     DOMAIN,
 )
+from .issues import async_check_key, budget_issue_id
 from .routing import build_plugins, build_tools
 
 MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
@@ -48,6 +50,18 @@ class OpenRouterLLMEntity(Entity):
             model=subentry.data[CONF_MODEL],
             entry_type=dr.DeviceEntryType.SERVICE,
         )
+
+    async def _async_chat(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Send a chat request, checking the key when OpenRouter refuses it."""
+        try:
+            response = await self.client.async_chat(payload)
+        except OpenRouterAPIError as err:
+            # 403 can mean a spent budget rather than a bad key, so let /key decide.
+            if err.status in (401, 402, 403):
+                await async_check_key(self.hass, self.entry)
+            raise
+        ir.async_delete_issue(self.hass, DOMAIN, budget_issue_id(self.entry))
+        return response
 
     async def _async_build_payload(self, chat_log: conversation.ChatLog, **extra: Any) -> dict[str, Any]:
         options = self.subentry.data

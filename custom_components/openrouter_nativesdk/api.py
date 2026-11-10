@@ -16,6 +16,10 @@ TIMEOUT = aiohttp.ClientTimeout(total=120)
 class OpenRouterAPIError(Exception):
     """OpenRouter request failed."""
 
+    def __init__(self, message: str, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
+
 
 class OpenRouterAuthError(OpenRouterAPIError):
     """OpenRouter rejected the API key."""
@@ -41,19 +45,20 @@ class OpenRouterAPI:
                 except ValueError:
                     data = {}
                 if resp.status in (401, 403):
-                    raise OpenRouterAuthError(_error_message(data, resp.status))
+                    raise OpenRouterAuthError(_error_message(data, resp.status), resp.status)
                 if resp.status >= 400:
-                    raise OpenRouterAPIError(_error_message(data, resp.status))
+                    raise OpenRouterAPIError(_error_message(data, resp.status), resp.status)
         except (aiohttp.ClientError, TimeoutError) as err:
             raise OpenRouterAPIError(f"Cannot reach OpenRouter: {err}") from err
         if isinstance(data, dict) and "error" in data:
             # Errors can arrive with a 200 status, for example mid-route failures.
-            raise OpenRouterAPIError(_error_message(data, resp.status))
+            raise OpenRouterAPIError(_error_message(data, resp.status), resp.status)
         return data if isinstance(data, dict) else {}
 
-    async def async_validate_key(self) -> None:
-        """Raise OpenRouterAuthError for a bad key; /models is public so it can't tell."""
-        await self._request("GET", "/key")
+    async def async_validate_key(self) -> dict[str, Any]:
+        """Return the key's details; raise OpenRouterAuthError for a bad key since /models is public."""
+        data = await self._request("GET", "/key")
+        return data.get("data") if isinstance(data.get("data"), dict) else {}
 
     async def async_list_models(self) -> list[dict[str, Any]]:
         data = await self._request("GET", "/models")
