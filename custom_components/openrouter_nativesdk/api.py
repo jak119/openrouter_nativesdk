@@ -7,6 +7,8 @@ import aiohttp
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
+from .const import APP_CATEGORIES, APP_TITLE, APP_URL
+
 BASE_URL = "https://openrouter.ai/api/v1"
 TIMEOUT = aiohttp.ClientTimeout(total=120)
 
@@ -26,8 +28,9 @@ class OpenRouterAPI:
         self._session = async_get_clientsession(hass)
         self._headers = {
             "Authorization": f"Bearer {api_key}",
-            "HTTP-Referer": "https://www.home-assistant.io",
-            "X-Title": "Home Assistant",
+            "HTTP-Referer": APP_URL,
+            "X-OpenRouter-Title": APP_TITLE,
+            "X-OpenRouter-Categories": APP_CATEGORIES,
         }
 
     async def _request(self, method: str, path: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:

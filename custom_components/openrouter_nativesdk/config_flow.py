@@ -81,8 +81,8 @@ class OpenRouterConfigFlow(ConfigFlow, domain=DOMAIN):
                     title="OpenRouter",
                     data=user_input,
                     subentries=[
-                        ConfigSubentryData(subentry_type="conversation", title=ConversationFlow.title, data=RECOMMENDED_CONVERSATION_OPTIONS, unique_id=None),
-                        ConfigSubentryData(subentry_type="ai_task_data", title=AITaskFlow.title, data=RECOMMENDED_AI_TASK_OPTIONS, unique_id=None),
+                        ConfigSubentryData(subentry_type="conversation", title=ConversationFlow.title_for(DEFAULT_MODEL), data=RECOMMENDED_CONVERSATION_OPTIONS, unique_id=None),
+                        ConfigSubentryData(subentry_type="ai_task_data", title=AITaskFlow.title_for(DEFAULT_MODEL), data=RECOMMENDED_AI_TASK_OPTIONS, unique_id=None),
                     ],
                 )
             errors["base"] = error
@@ -106,7 +106,15 @@ class OpenRouterSubentryFlow(ConfigSubentryFlow):
     """Shared routing options for conversation and AI task subentries."""
 
     defaults: ClassVar[dict[str, Any]] = {}
-    title = "OpenRouter"
+    title_suffix = ""
+    _catalog: list[dict[str, Any]]
+
+    @classmethod
+    def title_for(cls, model: str, catalog: list[dict[str, Any]] | None = None) -> str:
+        """Name a subentry after its router or model, e.g. "Jev Router"."""
+        names = {option["value"]: option["label"] for option in ROUTER_OPTIONS}
+        names.update({item["id"]: item.get("name") or item["id"] for item in catalog or [] if item.get("id")})
+        return f"{names.get(model, model)}{cls.title_suffix}"
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
         self.options = self.defaults.copy()
@@ -121,14 +129,20 @@ class OpenRouterSubentryFlow(ConfigSubentryFlow):
             return self.async_abort(reason="entry_not_loaded")
         if user_input is not None:
             data = {key: value for key, value in user_input.items() if value not in (None, "", [])}
+            title = self.title_for(data[CONF_MODEL], self._catalog)
             if self.source == SOURCE_USER:
-                return self.async_create_entry(title=self.title, data=data)
-            return self.async_update_and_abort(self._get_entry(), self._get_reconfigure_subentry(), data=data)
+                return self.async_create_entry(title=title, data=data)
+            subentry = self._get_reconfigure_subentry()
+            # Follow the model only while the title is still the generated one.
+            previous = self.title_for(subentry.data[CONF_MODEL], self._catalog)
+            if subentry.title not in (previous, f"OpenRouter{self.title_suffix}"):
+                title = subentry.title
+            return self.async_update_and_abort(self._get_entry(), subentry, title=title, data=data)
         try:
-            catalog = await self._get_entry().runtime_data.async_list_models()
+            self._catalog = await self._get_entry().runtime_data.async_list_models()
         except OpenRouterAPIError:
             return self.async_abort(reason="cannot_connect")
-        return self.async_show_form(step_id="init", data_schema=vol.Schema(self._schema(catalog)))
+        return self.async_show_form(step_id="init", data_schema=vol.Schema(self._schema(self._catalog)))
 
     def _schema(self, catalog: list[dict[str, Any]]) -> dict[Any, Any]:
         models = [
@@ -156,7 +170,6 @@ class OpenRouterSubentryFlow(ConfigSubentryFlow):
 
 class ConversationFlow(OpenRouterSubentryFlow):
     defaults = RECOMMENDED_CONVERSATION_OPTIONS
-    title = "OpenRouter"
 
     def _schema(self, catalog: list[dict[str, Any]]) -> dict[Any, Any]:
         hass_apis = [SelectOptionDict(value=api.id, label=api.name) for api in llm.async_get_apis(self.hass)]
@@ -171,4 +184,4 @@ class ConversationFlow(OpenRouterSubentryFlow):
 
 class AITaskFlow(OpenRouterSubentryFlow):
     defaults = RECOMMENDED_AI_TASK_OPTIONS
-    title = "OpenRouter AI Task"
+    title_suffix = " AI Task"

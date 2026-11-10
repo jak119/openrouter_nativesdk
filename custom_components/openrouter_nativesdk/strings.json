@@ -63,8 +63,8 @@
     "ai_task_data": {
       "entry_type": "AI task",
       "initiate_flow": {
-        "user": "Add ai task",
-        "reconfigure": "Reconfigure ai task"
+        "user": "Add AI task",
+        "reconfigure": "Reconfigure AI task"
       },
       "step": {
         "init": {
