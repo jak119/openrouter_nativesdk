@@ -143,21 +143,24 @@ class OpenRouterSubentryFlow(ConfigSubentryFlow):
         if self._get_entry().state is not ConfigEntryState.LOADED:
             return self.async_abort(reason="entry_not_loaded")
         if user_input is not None:
-            data = {key: value for key, value in user_input.items() if value not in (None, "", [])}
-            title = self.title_for(data[CONF_MODEL], self._catalog)
-            if self.source == SOURCE_USER:
-                return self.async_create_entry(title=title, data=data)
-            subentry = self._get_reconfigure_subentry()
-            # Follow the model only while the title is still the generated one.
-            previous = subentry.data[CONF_MODEL]
-            if subentry.title not in (self.title_for(previous, self._catalog), self.title_for(previous), f"OpenRouter{self.title_suffix}"):
-                title = subentry.title
-            return self.async_update_and_abort(self._get_entry(), subentry, title=title, data=data)
+            return self._async_save(user_input)
         try:
             self._catalog = await self._async_load_catalog()
         except OpenRouterAPIError:
             return self.async_abort(reason="cannot_connect")
         return self.async_show_form(step_id="init", data_schema=vol.Schema(self._schema(self._catalog)))
+
+    def _async_save(self, user_input: dict[str, Any]) -> SubentryFlowResult:
+        data = {key: value for key, value in user_input.items() if value not in (None, "", [])}
+        title = self.title_for(data[CONF_MODEL], self._catalog)
+        if self.source == SOURCE_USER:
+            return self.async_create_entry(title=title, data=data)
+        subentry = self._get_reconfigure_subentry()
+        # Follow the model only while the title is still the generated one.
+        previous = subentry.data[CONF_MODEL]
+        if subentry.title not in (self.title_for(previous, self._catalog), self.title_for(previous), f"OpenRouter{self.title_suffix}"):
+            title = subentry.title
+        return self.async_update_and_abort(self._get_entry(), subentry, title=title, data=data)
 
     async def _async_load_catalog(self) -> list[dict[str, Any]]:
         return await self._get_entry().runtime_data.async_list_models()
@@ -206,29 +209,56 @@ class AITaskFlow(OpenRouterSubentryFlow):
 
 
 class TTSFlow(OpenRouterSubentryFlow):
+    """Pick the model first, then its voice, so the voice list matches the model."""
+
     defaults = RECOMMENDED_TTS_OPTIONS
     title_suffix = " TTS"
+
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
+        if user_input is None:
+            return await super().async_step_init()
+        if user_input[CONF_MODEL] != self.options.get(CONF_MODEL):
+            # Voice IDs are provider-specific, so don't carry one across models.
+            self.options = {**self.options, CONF_MODEL: user_input[CONF_MODEL]}
+            self.options.pop(CONF_VOICE, None)
+        return await self.async_step_voice()
+
+    async def async_step_voice(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
+        model = self.options[CONF_MODEL]
+        if user_input is not None:
+            return self._async_save({**user_input, CONF_MODEL: model})
+        return self.async_show_form(
+            step_id="voice",
+            data_schema=vol.Schema(self._voice_schema(model)),
+            description_placeholders={"model": self.title_for(model, self._catalog).removesuffix(self.title_suffix)},
+        )
 
     async def _async_load_catalog(self) -> list[dict[str, Any]]:
         return await self._get_entry().runtime_data.async_list_models("speech")
 
     def _schema(self, catalog: list[dict[str, Any]]) -> dict[Any, Any]:
-        options = self.options
-        model = options.get(CONF_MODEL, DEFAULT_TTS_MODEL)
         models = [
             SelectOptionDict(value=item["id"], label=item.get("name") or item["id"])
             for item in sorted(catalog, key=lambda item: item.get("name") or item.get("id") or "")
             if item.get("id")
         ]
-        # Voices are listed for the saved model only; other models' voices can be typed in.
-        voices = next((_voice_ids(item) for item in catalog if item.get("id") == model), [])
         return {
-            vol.Required(CONF_MODEL, default=model): SelectSelector(
+            vol.Required(CONF_MODEL, default=self.options.get(CONF_MODEL, DEFAULT_TTS_MODEL)): SelectSelector(
                 SelectSelectorConfig(options=models, mode=SelectSelectorMode.DROPDOWN, custom_value=True)
             ),
-            vol.Optional(CONF_VOICE, description={"suggested_value": options.get(CONF_VOICE)}): SelectSelector(
-                SelectSelectorConfig(options=voices, mode=SelectSelectorMode.DROPDOWN, custom_value=True)
-            ),
+        }
+
+    def _voice_schema(self, model: str) -> dict[Any, Any]:
+        options = self.options
+        voices = next((_voice_ids(item) for item in self._catalog if item.get("id") == model), [])
+        # Without a published list (e.g. a typed-in model), fall back to free text.
+        voice_selector = (
+            SelectSelector(SelectSelectorConfig(options=voices, mode=SelectSelectorMode.DROPDOWN, custom_value=True))
+            if voices
+            else TextSelector()
+        )
+        return {
+            vol.Optional(CONF_VOICE, description={"suggested_value": options.get(CONF_VOICE)}): voice_selector,
             vol.Optional(CONF_INSTRUCTIONS, description={"suggested_value": options.get(CONF_INSTRUCTIONS)}): TextSelector(
                 TextSelectorConfig(multiline=True)
             ),

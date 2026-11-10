@@ -100,16 +100,25 @@
       "step": {
         "init": {
           "title": "OpenRouter text-to-speech",
+          "description": "Choose a speech model. Its voices are listed on the next page.",
           "data": {
-            "model": "Model",
+            "model": "Model"
+          },
+          "data_description": {
+            "model": "Speech model to synthesize with. Pick from the list or enter any OpenRouter TTS model slug."
+          }
+        },
+        "voice": {
+          "title": "OpenRouter text-to-speech voice",
+          "description": "Voice and delivery settings for {model}.",
+          "data": {
             "voice": "Voice",
             "instructions": "Delivery instructions",
             "response_format": "Audio format",
             "speed": "Speed"
           },
           "data_description": {
-            "model": "Speech model to synthesize with. Pick from the list or enter any OpenRouter TTS model slug.",
-            "voice": "Provider-specific voice ID, for example en_paul_neutral for Voxtral, alloy for OpenAI or Kore for Gemini. Can be overridden per call with the voice option.",
+            "voice": "Pick one of the model's voices, or type a provider-specific voice ID. Can be overridden per call with the voice option.",
             "instructions": "Tone, pacing or emotion, such as \"Speak in a warm and friendly tone.\" Only some models (OpenAI gpt-4o-mini-tts, Gemini, Fish Audio) use it; Gemini requires it.",
             "response_format": "Leave empty for the model's default. Some models only return one format and reject the other.",
             "speed": "Playback speed multiplier. Only some models support it; others may reject a non-default value."
