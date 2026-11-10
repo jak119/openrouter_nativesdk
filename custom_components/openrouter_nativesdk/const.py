@@ -3,6 +3,9 @@ from homeassistant.const import CONF_LLM_HASS_API, CONF_MODEL, CONF_PROMPT
 from homeassistant.helpers import llm
 
 DOMAIN = "openrouter_nativesdk"
+APP_URL = "https://github.com/jak119/openrouter_nativesdk"
+APP_TITLE = "OpenRouter Enhanced for Home Assistant"
+APP_CATEGORIES = "personal-agent,general-chat"
 CONF_COST_TIER = "cost_tier"
 CONF_ALLOWED_MODELS = "allowed_models"
 CONF_EXCLUDED_MODELS = "excluded_models"
