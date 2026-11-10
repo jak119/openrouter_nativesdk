@@ -14,7 +14,8 @@
   "config_flow": true,
   "dependencies": [
     "ai_task",
-    "conversation"
+    "conversation",
+    "tts"
   ],
   "documentation": "https://github.com/jak119/openrouter-enhanced",
   "integration_type": "service",

@@ -90,6 +90,37 @@
         "cannot_connect": "Failed to connect",
         "reconfigure_successful": "Re-configuration was successful"
       }
+    },
+    "tts": {
+      "entry_type": "Text-to-speech",
+      "initiate_flow": {
+        "user": "Add text-to-speech",
+        "reconfigure": "Reconfigure text-to-speech"
+      },
+      "step": {
+        "init": {
+          "title": "OpenRouter text-to-speech",
+          "data": {
+            "model": "Model",
+            "voice": "Voice",
+            "instructions": "Delivery instructions",
+            "response_format": "Audio format",
+            "speed": "Speed"
+          },
+          "data_description": {
+            "model": "Speech model to synthesize with. Pick from the list or enter any OpenRouter TTS model slug.",
+            "voice": "Provider-specific voice ID, for example en_paul_neutral for Voxtral, alloy for OpenAI or Kore for Gemini. Can be overridden per call with the voice option.",
+            "instructions": "Tone, pacing or emotion, such as \"Speak in a warm and friendly tone.\" Only some models (OpenAI gpt-4o-mini-tts, Gemini, Fish Audio) use it; Gemini requires it.",
+            "response_format": "Leave empty for the model's default. Some models only return one format and reject the other.",
+            "speed": "Playback speed multiplier. Only some models support it; others may reject a non-default value."
+          }
+        }
+      },
+      "abort": {
+        "entry_not_loaded": "The OpenRouter entry is not loaded.",
+        "cannot_connect": "Failed to connect",
+        "reconfigure_successful": "Re-configuration was successful"
+      }
     }
   },
   "issues": {
@@ -115,6 +146,12 @@
         "low": "Low (cheapest)",
         "medium": "Medium (balanced)",
         "high": "High (most capable)"
+      }
+    },
+    "response_format": {
+      "options": {
+        "mp3": "MP3",
+        "pcm": "PCM (played as WAV)"
       }
     }
   }

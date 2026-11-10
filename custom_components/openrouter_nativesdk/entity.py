@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import base64
 import json
+from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
@@ -52,9 +53,12 @@ class OpenRouterLLMEntity(Entity):
         )
 
     async def _async_chat(self, payload: dict[str, Any]) -> dict[str, Any]:
-        """Send a chat request, checking the key when OpenRouter refuses it."""
+        return await self._async_call(self.client.async_chat, payload)
+
+    async def _async_call[T](self, request: Callable[[dict[str, Any]], Awaitable[T]], payload: dict[str, Any]) -> T:
+        """Send a request, checking the key when OpenRouter refuses it."""
         try:
-            response = await self.client.async_chat(payload)
+            response = await request(payload)
         except OpenRouterAPIError as err:
             # 403 can mean a spent budget rather than a bad key, so let /key decide.
             if err.status in (401, 402, 403):
