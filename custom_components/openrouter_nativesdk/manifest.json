@@ -10,18 +10,13 @@
   ],
   "config_flow": true,
   "dependencies": [
+    "ai_task",
     "conversation"
   ],
   "documentation": "https://github.com/jak119/openrouter_nativesdk",
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/jak119/openrouter_nativesdk/issues",
-  "loggers": [
-    "openrouter"
-  ],
   "quality_scale": "bronze",
-  "requirements": [
-    "openrouter==1.1.11"
-  ],
   "version": "0.0.2"
 }

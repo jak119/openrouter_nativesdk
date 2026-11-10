@@ -1,0 +1,14 @@
+[project]
+name = "openrouter-nativesdk"
+version = "0.0.0"
+description = "OpenRouter Enhanced custom integration for Home Assistant"
+requires-python = ">=3.13"
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.setuptools]
+packages = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
