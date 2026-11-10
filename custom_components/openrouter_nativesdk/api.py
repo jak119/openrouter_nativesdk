@@ -1,60 +1,66 @@
-"""Async boundary around the official OpenRouter Python SDK."""
+"""Thin async client for the OpenRouter HTTP API."""
 from __future__ import annotations
-import base64
+
 from typing import Any
+
+import aiohttp
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
+BASE_URL = "https://openrouter.ai/api/v1"
+TIMEOUT = aiohttp.ClientTimeout(total=120)
+
 
 class OpenRouterAPIError(Exception):
     """OpenRouter request failed."""
 
+
+class OpenRouterAuthError(OpenRouterAPIError):
+    """OpenRouter rejected the API key."""
+
+
 class OpenRouterAPI:
-    """Run the synchronous generated SDK without blocking Home Assistant."""
+    """Call OpenRouter with Home Assistant's shared aiohttp session."""
+
     def __init__(self, hass: HomeAssistant, api_key: str) -> None:
-        self.hass = hass
-        self.api_key = api_key
+        self._session = async_get_clientsession(hass)
+        self._headers = {
+            "Authorization": f"Bearer {api_key}",
+            "HTTP-Referer": "https://www.home-assistant.io",
+            "X-Title": "Home Assistant",
+        }
 
-    def _client(self):
-        from openrouter import OpenRouter
-        return OpenRouter(api_key=self.api_key)
+    async def _request(self, method: str, path: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+        try:
+            async with self._session.request(method, f"{BASE_URL}{path}", headers=self._headers, json=payload, timeout=TIMEOUT) as resp:
+                try:
+                    data = await resp.json(content_type=None)
+                except ValueError:
+                    data = {}
+                if resp.status in (401, 403):
+                    raise OpenRouterAuthError(_error_message(data, resp.status))
+                if resp.status >= 400:
+                    raise OpenRouterAPIError(_error_message(data, resp.status))
+        except (aiohttp.ClientError, TimeoutError) as err:
+            raise OpenRouterAPIError(f"Cannot reach OpenRouter: {err}") from err
+        if isinstance(data, dict) and "error" in data:
+            # Errors can arrive with a 200 status, for example mid-route failures.
+            raise OpenRouterAPIError(_error_message(data, resp.status))
+        return data if isinstance(data, dict) else {}
 
-    async def _run(self, operation, *args, **kwargs):
-        def call():
-            try:
-                with self._client() as client:
-                    return operation(client, *args, **kwargs)
-            except Exception as err:
-                raise OpenRouterAPIError(str(err)) from err
-        return await self.hass.async_add_executor_job(call)
+    async def async_validate_key(self) -> None:
+        """Raise OpenRouterAuthError for a bad key; /models is public so it can't tell."""
+        await self._request("GET", "/key")
 
     async def async_list_models(self) -> list[dict[str, Any]]:
-        response = await self._run(lambda c: c.models.list())
-        return _items(response)
+        data = await self._request("GET", "/models")
+        return [item for item in data.get("data") or [] if isinstance(item, dict)]
 
-    async def async_list_presets(self) -> list[dict[str, Any]]:
-        response = await self._run(lambda c: c.presets.list())
-        return _items(response)
+    async def async_chat(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._request("POST", "/chat/completions", payload)
 
-    async def async_get_preset(self, slug: str) -> dict[str, Any]:
-        response = await self._run(lambda c: c.presets.get(slug=slug))
-        data = getattr(response, "data", response)
-        return data.model_dump() if hasattr(data, "model_dump") else data
 
-    async def async_chat(self, **kwargs):
-        return await self._run(lambda c: c.chat.send(**kwargs))
-
-    async def async_transcribe(self, audio: bytes, audio_format: str, **kwargs):
-        payload = {"data": base64.b64encode(audio).decode(), "format": audio_format}
-        return await self._run(lambda c: c.stt.create_transcription(input_audio=payload, **kwargs))
-
-    async def async_speech(self, **kwargs) -> tuple[bytes, str]:
-        """Generate speech and read the response before closing the SDK client."""
-        def read_response(response):
-            return response.content, response.headers.get("content-type", "audio/mpeg")
-        return await self._run(lambda c: read_response(c.tts.create_speech(**kwargs)))
-
-    async def async_generate_image(self, **kwargs):
-        return await self._run(lambda c: c.images.generate(**kwargs))
-
-def _items(response: Any) -> list[dict[str, Any]]:
-    value = response.get("data", response) if isinstance(response, dict) else getattr(response, "data", response)
-    return [item if isinstance(item, dict) else item.__dict__ for item in value or []]
+def _error_message(data: Any, status: int) -> str:
+    error = data.get("error") if isinstance(data, dict) else None
+    message = error.get("message") if isinstance(error, dict) else error
+    return f"HTTP {status}: {message or 'request failed'}"

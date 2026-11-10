@@ -1,20 +1,23 @@
 """OpenRouter Enhanced Home Assistant integration."""
 from __future__ import annotations
-from typing import TypeAlias
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
-from .api import OpenRouterAPI, OpenRouterAPIError
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 
-PLATFORMS = [Platform.CONVERSATION, Platform.AI_TASK, Platform.STT, Platform.TTS]
-OpenRouterConfigEntry: TypeAlias = ConfigEntry[OpenRouterAPI]
+from .api import OpenRouterAPI, OpenRouterAPIError, OpenRouterAuthError
+
+PLATFORMS = [Platform.AI_TASK, Platform.CONVERSATION]
+type OpenRouterConfigEntry = ConfigEntry[OpenRouterAPI]
 
 async def async_setup_entry(hass: HomeAssistant, entry: OpenRouterConfigEntry) -> bool:
     """Set up OpenRouter."""
     client = OpenRouterAPI(hass, entry.data[CONF_API_KEY])
     try:
-        await client.async_list_models()
+        await client.async_validate_key()
+    except OpenRouterAuthError as err:
+        raise ConfigEntryAuthFailed(str(err)) from err
     except OpenRouterAPIError as err:
         raise ConfigEntryNotReady(str(err)) from err
     entry.runtime_data = client

@@ -17,11 +17,13 @@
       }
     },
     "error": {
-      "cannot_connect": "Unable to connect to OpenRouter.",
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
       "no_models": "No models were returned."
     },
     "abort": {
-      "reauth_successful": "Re-authentication was successful."
+      "already_configured": "Account is already configured",
+      "reauth_successful": "Re-authentication was successful"
     }
   },
   "config_subentries": {
@@ -34,69 +36,68 @@
       "step": {
         "init": {
           "title": "OpenRouter conversation agent",
-          "description": "Configure the conversation agent.",
           "data": {
-            "model": "Model",
-            "preset": "Preset",
-            "router": "Router",
-            "cost_quality_tradeoff": "Cost/quality tradeoff",
+            "model": "Model or router",
+            "cost_tier": "Cost tier",
             "allowed_models": "Allowed models",
-            "temperature": "Temperature",
-            "prompt": "Prompt",
-            "llm_hass_api": "Home Assistant API access",
-            "web_search": "Enable web search"
+            "excluded_models": "Excluded models",
+            "web_search": "Web search",
+            "prompt": "Instructions",
+            "llm_hass_api": "Control Home Assistant"
+          },
+          "data_description": {
+            "model": "Pick a router (Auto, Auto beta, Jev, or any author/auto slug) to let OpenRouter choose the model per request, or pick a fixed model.",
+            "cost_tier": "Router cost policy. Leave empty to use the router's default. Ignored for fixed models.",
+            "allowed_models": "Model slugs or wildcard patterns such as anthropic/*. Auto Router treats this as a hard limit; Jev treats it as a preference and falls back to the full pool if nothing it matches is routable. Ignored for fixed models.",
+            "excluded_models": "Model slugs or patterns the router must never pick. Always enforced. Ignored for fixed models.",
+            "web_search": "Let the model search the web through OpenRouter when it needs current information. Searches are billed by OpenRouter."
           }
         }
+      },
+      "abort": {
+        "entry_not_loaded": "The OpenRouter entry is not loaded.",
+        "cannot_connect": "Failed to connect",
+        "reconfigure_successful": "Re-configuration was successful"
       }
     },
     "ai_task_data": {
       "entry_type": "AI task",
       "initiate_flow": {
-        "user": "Add AI task",
-        "reconfigure": "Reconfigure AI task"
+        "user": "Add ai task",
+        "reconfigure": "Reconfigure ai task"
       },
       "step": {
         "init": {
-          "title": "OpenRouter AI tasks",
-          "description": "Configure AI task generation.",
+          "title": "OpenRouter AI task",
           "data": {
-            "model": "Model",
-            "image_model": "Image generation model"
+            "model": "Model or router",
+            "cost_tier": "Cost tier",
+            "allowed_models": "Allowed models",
+            "excluded_models": "Excluded models",
+            "web_search": "Web search"
+          },
+          "data_description": {
+            "model": "Pick a router (Auto, Auto beta, Jev, or any author/auto slug) to let OpenRouter choose the model per request, or pick a fixed model.",
+            "cost_tier": "Router cost policy. Leave empty to use the router's default. Ignored for fixed models.",
+            "allowed_models": "Model slugs or wildcard patterns such as anthropic/*. Auto Router treats this as a hard limit; Jev treats it as a preference and falls back to the full pool if nothing it matches is routable. Ignored for fixed models.",
+            "excluded_models": "Model slugs or patterns the router must never pick. Always enforced. Ignored for fixed models.",
+            "web_search": "Let the model search the web through OpenRouter when it needs current information. Searches are billed by OpenRouter."
           }
         }
+      },
+      "abort": {
+        "entry_not_loaded": "The OpenRouter entry is not loaded.",
+        "cannot_connect": "Failed to connect",
+        "reconfigure_successful": "Re-configuration was successful"
       }
-    },
-    "stt": {
-      "entry_type": "Speech-to-text",
-      "initiate_flow": {
-        "user": "Add speech-to-text",
-        "reconfigure": "Reconfigure speech-to-text"
-      },
-      "step": {
-        "init": {
-          "title": "OpenRouter Speech-to-Text",
-          "description": "Configure speech-to-text.",
-          "data": {
-            "stt_model": "Speech-to-text model"
-          }
-        }
-      }
-    },
-    "tts": {
-      "entry_type": "Text-to-speech",
-      "initiate_flow": {
-        "user": "Add text-to-speech",
-        "reconfigure": "Reconfigure text-to-speech"
-      },
-      "step": {
-        "init": {
-          "title": "OpenRouter Text-to-Speech",
-          "description": "Configure text-to-speech.",
-          "data": {
-            "tts_model": "Text-to-speech model",
-            "voice": "Voice"
-          }
-        }
+    }
+  },
+  "selector": {
+    "cost_tier": {
+      "options": {
+        "low": "Low (cheapest)",
+        "medium": "Medium (balanced)",
+        "high": "High (most capable)"
       }
     }
   }
