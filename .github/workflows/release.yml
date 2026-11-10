@@ -2,6 +2,11 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      prerelease:
+        description: Publish as a pre-release
+        type: boolean
+        default: false
 
 jobs:
   validate:
@@ -64,11 +69,29 @@ jobs:
           echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
           echo "latest=$LATEST"     >> "$GITHUB_OUTPUT"
 
+      - name: Resolve changelog base
+        id: base
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          # Pre-releases list changes since the most recent tag of any kind.
+          # Full releases list everything since the last full release, so
+          # changes first shipped in pre-releases are included.
+          if [[ "$PRERELEASE" == "true" ]]; then
+            BASE_TAG="${{ steps.version.outputs.latest_tag }}"
+          else
+            BASE_TAG=$(gh release list --exclude-pre-releases --exclude-drafts --limit 100 \
+              --json tagName --jq '.[].tagName' \
+              | grep -E '^v[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$' | sort -V | tail -n1 || true)
+          fi
+          echo "tag=$BASE_TAG" >> "$GITHUB_OUTPUT"
+
       - name: Generate changelog
         id: changelog
         run: |
           NEW_TAG="${{ steps.version.outputs.tag }}"
-          LATEST_TAG="${{ steps.version.outputs.latest_tag }}"
+          LATEST_TAG="${{ steps.base.outputs.tag }}"
 
           if [[ -n "$LATEST_TAG" ]]; then
             RANGE="$LATEST_TAG..HEAD"
@@ -119,7 +142,13 @@ jobs:
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRERELEASE: ${{ inputs.prerelease }}
         run: |
+          FLAGS=()
+          if [[ "$PRERELEASE" == "true" ]]; then
+            FLAGS+=(--prerelease)
+          fi
           gh release create "${{ steps.version.outputs.tag }}" \
             --title "${{ steps.version.outputs.tag }}" \
-            --notes-file /tmp/changelog.md
+            --notes-file /tmp/changelog.md \
+            "${FLAGS[@]}"
