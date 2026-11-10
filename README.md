@@ -29,7 +29,7 @@ This custom component uses the distinct `openrouter_nativesdk` domain, so it can
 
 ## Installation
 
-Install through HACS as a custom repository with category **Integration**, or copy `custom_components/openrouter_nativesdk` into the Home Assistant configuration directory. Restart Home Assistant, then add **OpenRouter Enhanced** under Settings → Devices & services and enter an OpenRouter API key.
+Install through HACS by adding `https://github.com/jak119/openrouter-enhanced` as a custom repository with category **Integration**, or copy `custom_components/openrouter_nativesdk` into the Home Assistant configuration directory. Restart Home Assistant, then add **OpenRouter Enhanced** under Settings → Devices & services and enter an OpenRouter API key.
 
 ## Privacy
 
