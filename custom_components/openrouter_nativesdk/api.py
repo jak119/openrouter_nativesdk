@@ -48,6 +48,10 @@ class OpenRouterAPI:
             raise OpenRouterAPIError(_error_message(data, resp.status))
         return data if isinstance(data, dict) else {}
 
+    async def async_validate_key(self) -> None:
+        """Raise OpenRouterAuthError for a bad key; /models is public so it can't tell."""
+        await self._request("GET", "/key")
+
     async def async_list_models(self) -> list[dict[str, Any]]:
         data = await self._request("GET", "/models")
         return [item for item in data.get("data") or [] if isinstance(item, dict)]

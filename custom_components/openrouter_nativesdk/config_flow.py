@@ -47,8 +47,10 @@ ROUTER_SLUGS = {option["value"] for option in ROUTER_OPTIONS}
 
 async def _async_validate_key(flow: ConfigFlow, api_key: str) -> str | None:
     """Return an error key, or None when the key works."""
+    client = OpenRouterAPI(flow.hass, api_key)
     try:
-        models = await OpenRouterAPI(flow.hass, api_key).async_list_models()
+        await client.async_validate_key()
+        models = await client.async_list_models()
     except OpenRouterAuthError:
         return "invalid_auth"
     except OpenRouterAPIError:

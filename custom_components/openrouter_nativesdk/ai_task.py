@@ -3,11 +3,14 @@ from __future__ import annotations
 
 import json
 
+import probatio
 from homeassistant.components import ai_task, conversation
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import llm
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.util import slugify
 from homeassistant.util.json import json_loads
 
 from .api import OpenRouterAPIError
@@ -26,7 +29,15 @@ class OpenRouterAITaskEntity(OpenRouterLLMEntity, ai_task.AITaskEntity):
     _attr_supported_features = ai_task.AITaskEntityFeature.GENERATE_DATA | ai_task.AITaskEntityFeature.SUPPORT_ATTACHMENTS
 
     async def _async_generate_data(self, task: ai_task.GenDataTask, chat_log: conversation.ChatLog) -> ai_task.GenDataTaskResult:
-        extra = {"response_format": {"type": "json_object"}} if task.structure else {}
+        extra = {}
+        if task.structure:
+            serializer = chat_log.llm_api.custom_serializer if chat_log.llm_api else llm.selector_serializer
+            schema = probatio.to_openapi(task.structure, custom_serializer=serializer, openapi_version="3.1.0")
+            extra = {
+                "response_format": {"type": "json_schema", "json_schema": {"name": slugify(task.name)[:64] or "response", "schema": schema}},
+                # Only route to endpoints that honour response_format.
+                "provider": {"require_parameters": True},
+            }
         try:
             response = await self.client.async_chat(await self._async_build_payload(chat_log, **extra))
         except OpenRouterAPIError as err:

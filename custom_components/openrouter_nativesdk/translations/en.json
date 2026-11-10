@@ -5,25 +5,25 @@
         "title": "OpenRouter",
         "description": "Enter an OpenRouter API key.",
         "data": {
-          "api_key": "[%key:common::config_flow::data::api_key%]"
+          "api_key": "API key"
         }
       },
       "reauth_confirm": {
         "title": "Reauthenticate OpenRouter",
         "description": "Enter a new OpenRouter API key.",
         "data": {
-          "api_key": "[%key:common::config_flow::data::api_key%]"
+          "api_key": "API key"
         }
       }
     },
     "error": {
-      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
       "no_models": "No models were returned."
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_account%]",
-      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
+      "already_configured": "Account is already configured",
+      "reauth_successful": "Re-authentication was successful"
     }
   },
   "config_subentries": {
@@ -42,8 +42,8 @@
             "allowed_models": "Allowed models",
             "excluded_models": "Excluded models",
             "web_search": "Web search",
-            "prompt": "[%key:common::config_flow::data::prompt%]",
-            "llm_hass_api": "[%key:common::config_flow::data::llm_hass_api%]"
+            "prompt": "Instructions",
+            "llm_hass_api": "Control Home Assistant"
           },
           "data_description": {
             "model": "Pick a router (Auto, Auto beta, Jev, or any author/auto slug) to let OpenRouter choose the model per request, or pick a fixed model.",
@@ -56,8 +56,8 @@
       },
       "abort": {
         "entry_not_loaded": "The OpenRouter entry is not loaded.",
-        "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-        "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
+        "cannot_connect": "Failed to connect",
+        "reconfigure_successful": "Re-configuration was successful"
       }
     },
     "ai_task_data": {
@@ -87,8 +87,8 @@
       },
       "abort": {
         "entry_not_loaded": "The OpenRouter entry is not loaded.",
-        "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-        "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
+        "cannot_connect": "Failed to connect",
+        "reconfigure_successful": "Re-configuration was successful"
       }
     }
   },

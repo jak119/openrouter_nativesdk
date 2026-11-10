@@ -15,7 +15,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: OpenRouterConfigEntry) -
     """Set up OpenRouter."""
     client = OpenRouterAPI(hass, entry.data[CONF_API_KEY])
     try:
-        await client.async_list_models()
+        await client.async_validate_key()
     except OpenRouterAuthError as err:
         raise ConfigEntryAuthFailed(str(err)) from err
     except OpenRouterAPIError as err:

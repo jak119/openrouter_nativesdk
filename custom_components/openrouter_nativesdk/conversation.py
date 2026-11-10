@@ -66,6 +66,8 @@ class OpenRouterConversationEntity(OpenRouterLLMEntity, conversation.Conversatio
 def _assistant_content(message: dict[str, Any], agent_id: str) -> conversation.AssistantContent:
     tool_calls = []
     for call in message.get("tool_calls") or []:
+        if call.get("type", "function") != "function":
+            continue
         function = call.get("function") or {}
         try:
             args = json.loads(function.get("arguments") or "{}")
