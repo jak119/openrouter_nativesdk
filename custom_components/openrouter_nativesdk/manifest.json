@@ -22,5 +22,5 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/jak119/openrouter-enhanced/issues",
   "quality_scale": "bronze",
-  "version": "2026.11.12"
+  "version": "2026.11.12.1"
 }
