@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from homeassistant.components.tts import ATTR_VOICE, TextToSpeechEntity, TtsAudioType
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.const import CONF_MODEL
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
@@ -36,9 +36,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class OpenRouterTTSEntity(OpenRouterLLMEntity, TextToSpeechEntity):
     """OpenRouter speech synthesis entity."""
 
+    _attr_has_entity_name = False
     _attr_supported_languages = SUPPORTED_LANGUAGES
     _attr_default_language = "en-US"
     _attr_supported_options = SUPPORTED_OPTIONS
+
+    def __init__(self, entry: ConfigEntry, subentry: ConfigSubentry) -> None:
+        super().__init__(entry, subentry)
+        self._attr_name = subentry.title
 
     @property
     def default_options(self) -> Mapping[str, Any]:
