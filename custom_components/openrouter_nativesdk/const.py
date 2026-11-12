@@ -11,6 +11,10 @@ CONF_COST_TIER = "cost_tier"
 CONF_ALLOWED_MODELS = "allowed_models"
 CONF_EXCLUDED_MODELS = "excluded_models"
 CONF_WEB_SEARCH = "web_search"
+CONF_VOICE = "voice"
+CONF_INSTRUCTIONS = "instructions"
+CONF_RESPONSE_FORMAT = "response_format"
+CONF_SPEED = "speed"
 
 COST_TIERS = ["low", "medium", "high"]
 ROUTER_OPTIONS = [
@@ -19,6 +23,9 @@ ROUTER_OPTIONS = [
     {"value": "typesafe/jev-router", "label": "Jev Router"},
 ]
 DEFAULT_MODEL = "openrouter/auto"
+DEFAULT_TTS_MODEL = "mistralai/voxtral-mini-tts-2603"
+DEFAULT_TTS_VOICE = "en_paul_neutral"
+RESPONSE_FORMATS = ["mp3", "pcm"]
 
 RECOMMENDED_CONVERSATION_OPTIONS = {
     CONF_MODEL: DEFAULT_MODEL,
@@ -29,4 +36,10 @@ RECOMMENDED_CONVERSATION_OPTIONS = {
 RECOMMENDED_AI_TASK_OPTIONS = {
     CONF_MODEL: DEFAULT_MODEL,
     CONF_WEB_SEARCH: True,
+}
+RECOMMENDED_TTS_OPTIONS = {
+    CONF_MODEL: DEFAULT_TTS_MODEL,
+    CONF_VOICE: DEFAULT_TTS_VOICE,
+    # mp3 carries its own sample rate; pcm relies on the Content-Type or a 24 kHz guess.
+    CONF_RESPONSE_FORMAT: "mp3",
 }

@@ -12,7 +12,7 @@ from homeassistant.helpers.event import async_track_time_interval
 from .api import OpenRouterAPI, OpenRouterAPIError, OpenRouterAuthError
 from .issues import async_check_key, async_delete_issues, async_update_issues
 
-PLATFORMS = [Platform.AI_TASK, Platform.CONVERSATION]
+PLATFORMS = [Platform.AI_TASK, Platform.CONVERSATION, Platform.TTS]
 KEY_CHECK_INTERVAL = timedelta(days=1)
 type OpenRouterConfigEntry = ConfigEntry[OpenRouterAPI]
 

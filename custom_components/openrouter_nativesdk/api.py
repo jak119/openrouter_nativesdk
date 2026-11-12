@@ -37,22 +37,13 @@ class OpenRouterAPI:
             "X-OpenRouter-Categories": APP_CATEGORIES,
         }
 
-    async def _request(self, method: str, path: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def _request(self, method: str, path: str, payload: dict[str, Any] | None = None, params: dict[str, str] | None = None) -> dict[str, Any]:
         try:
-            async with self._session.request(method, f"{BASE_URL}{path}", headers=self._headers, json=payload, timeout=TIMEOUT) as resp:
-                try:
-                    data = await resp.json(content_type=None)
-                except ValueError:
-                    data = {}
-                if resp.status in (401, 403):
-                    raise OpenRouterAuthError(_error_message(data, resp.status), resp.status)
-                if resp.status >= 400:
-                    raise OpenRouterAPIError(_error_message(data, resp.status), resp.status)
+            async with self._session.request(method, f"{BASE_URL}{path}", headers=self._headers, json=payload, params=params, timeout=TIMEOUT) as resp:
+                data = await _json_body(resp)
+                _raise_for_status(data, resp.status)
         except (aiohttp.ClientError, TimeoutError) as err:
             raise OpenRouterAPIError(f"Cannot reach OpenRouter: {err}") from err
-        if isinstance(data, dict) and "error" in data:
-            # Errors can arrive with a 200 status, for example mid-route failures.
-            raise OpenRouterAPIError(_error_message(data, resp.status), resp.status)
         return data if isinstance(data, dict) else {}
 
     async def async_validate_key(self) -> dict[str, Any]:
@@ -60,12 +51,41 @@ class OpenRouterAPI:
         data = await self._request("GET", "/key")
         return data.get("data") if isinstance(data.get("data"), dict) else {}
 
-    async def async_list_models(self) -> list[dict[str, Any]]:
-        data = await self._request("GET", "/models")
+    async def async_list_models(self, output_modalities: str | None = None) -> list[dict[str, Any]]:
+        params = {"output_modalities": output_modalities} if output_modalities else None
+        data = await self._request("GET", "/models", params=params)
         return [item for item in data.get("data") or [] if isinstance(item, dict)]
 
     async def async_chat(self, payload: dict[str, Any]) -> dict[str, Any]:
         return await self._request("POST", "/chat/completions", payload)
+
+    async def async_speech(self, payload: dict[str, Any]) -> tuple[bytes, str]:
+        """Return synthesized audio bytes and their Content-Type."""
+        try:
+            async with self._session.post(f"{BASE_URL}/audio/speech", headers=self._headers, json=payload, timeout=TIMEOUT) as resp:
+                content_type = resp.headers.get("Content-Type", "")
+                if resp.status >= 400 or content_type.startswith("application/json"):
+                    _raise_for_status(await _json_body(resp), resp.status)
+                return await resp.read(), content_type
+        except (aiohttp.ClientError, TimeoutError) as err:
+            raise OpenRouterAPIError(f"Cannot reach OpenRouter: {err}") from err
+
+
+async def _json_body(resp: aiohttp.ClientResponse) -> Any:
+    try:
+        return await resp.json(content_type=None)
+    except ValueError:
+        return {}
+
+
+def _raise_for_status(data: Any, status: int) -> None:
+    if status in (401, 403):
+        raise OpenRouterAuthError(_error_message(data, status), status)
+    if status >= 400:
+        raise OpenRouterAPIError(_error_message(data, status), status)
+    if isinstance(data, dict) and "error" in data:
+        # Errors can arrive with a 200 status, for example mid-route failures.
+        raise OpenRouterAPIError(_error_message(data, status), status)
 
 
 def _error_message(data: Any, status: int) -> str:
