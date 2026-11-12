@@ -1,6 +1,8 @@
 # OpenRouter Enhanced for Home Assistant
 
-An experimental HACS custom component that exposes OpenRouter's model routers to Home Assistant. It provides:
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/jak119/openrouter-enhanced)
+
+A HACS custom component that exposes OpenRouter's model routers and associated settings to Home Assistant. It provides:
 
 - **Conversation agent** for Assist, with Home Assistant tool calling and image attachments.
 - **AI Task** entity for `ai_task.generate_data`, including structured output.
