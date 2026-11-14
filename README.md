@@ -57,3 +57,7 @@ pip install ".[test]" ruff
 ruff check custom_components/
 pytest tests/
 ```
+
+### GitHub Codespaces
+
+Open the forwarded **Home Assistant** port (8123) and complete the onboarding flow. The Codespaces environment mounts this checkout's integration into Home Assistant, so add **OpenRouter Enhanced** from **Settings → Devices & services** to test it. After changing integration code, restart Home Assistant from its UI to load the changes.
